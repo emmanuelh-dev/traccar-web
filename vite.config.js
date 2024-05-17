@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 /* eslint-disable no-template-curly-in-string */
 export default defineConfig(() => ({
   server: {
-    port: 3000,
+    port: 3001,
     proxy: {
       '/api/socket': 'wss:https://api.gonzher.com/',
       '/api': 'https://api.gonzher.com/',
