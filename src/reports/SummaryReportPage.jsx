@@ -27,6 +27,8 @@ const columnsArray = [
   ['averageSpeed', 'reportAverageSpeed'],
   ['maxSpeed', 'reportMaximumSpeed'],
   ['engineHours', 'reportEngineHours'],
+  ['startHours', 'reportStartEngineHours'],
+  ['endHours', 'reportEndEngineHours'],
   ['spentFuel', 'reportSpentFuel'],
 ];
 const columnsMap = new Map(columnsArray);
@@ -101,6 +103,8 @@ const SummaryReportPage = () => {
       case 'maxSpeed':
         return value > 0 ? formatSpeed(value, speedUnit, t) : null;
       case 'engineHours':
+      case 'startHours':
+      case 'endHours':
         return value > 0 ? formatNumericHours(value, t) : null;
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
@@ -112,7 +116,7 @@ const SummaryReportPage = () => {
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportSummary']}>
       <div className={classes.header}>
-        <ReportFilter handleSubmit={handleSubmit} handleSchedule={handleSchedule} multiDevice includeGroups>
+        <ReportFilter handleSubmit={handleSubmit} handleSchedule={handleSchedule} multiDevice includeGroups loading={loading}>
           <div className={classes.filterItem}>
             <FormControl fullWidth>
               <InputLabel>{t('sharedType')}</InputLabel>
