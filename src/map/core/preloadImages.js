@@ -9,7 +9,6 @@ import bicycleSvg from '../../resources/images/icon/bicycle.svg';
 import boatSvg from '../../resources/images/icon/boat.svg';
 import busSvg from '../../resources/images/icon/bus.svg';
 import carSvg from '../../resources/images/icon/car.svg';
-import camperSvg from '../../resources/images/icon/camper.svg';
 import craneSvg from '../../resources/images/icon/crane.svg';
 import defaultSvg from '../../resources/images/icon/default.svg';
 import helicopterSvg from '../../resources/images/icon/helicopter.svg';
@@ -33,7 +32,6 @@ export const mapIcons = {
   boat: boatSvg,
   bus: busSvg,
   car: carSvg,
-  camper: camperSvg,
   crane: craneSvg,
   default: defaultSvg,
   helicopter: helicopterSvg,

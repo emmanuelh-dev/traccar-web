@@ -4,34 +4,46 @@ import { useNavigate } from 'react-router-dom';
 import Draggable from 'react-draggable';
 import {
   Card,
-  CardContent,
   Typography,
   CardActions,
   IconButton,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
   Menu,
   MenuItem,
   CardMedia,
 } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import CloseIcon from '@mui/icons-material/Close';
-import ReplayIcon from '@mui/icons-material/Replay';
-import PublishIcon from '@mui/icons-material/Publish';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PendingIcon from '@mui/icons-material/Pending';
 
+import {
+  TbEngineOff,
+  TbEngine,
+  TbReportSearch,
+  TbMapPinShare,
+  TbMapPinPin,
+  TbTrashX,
+  TbPencil,
+  TbInfoCircle,
+} from 'react-icons/tb';
+
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
+import { FaTemperatureFull } from 'react-icons/fa6';
+import { LiaStreetViewSolid } from 'react-icons/lia';
+import dayjs from 'dayjs';
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
-import { useDeviceReadonly } from '../util/permissions';
-import usePositionAttributes from '../attributes/usePositionAttributes';
+import { useAdministrator } from '../util/permissions';
 import { devicesActions } from '../../store';
 import { useCatch, useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
+
+import { runMotor, stopMotor } from '../util/sms';
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -54,6 +66,12 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     padding: theme.spacing(1, 1, 0, 2),
   },
+  header2: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing(1, 1, 0, 2),
+  },
   content: {
     paddingTop: theme.spacing(1),
     paddingBottom: theme.spacing(1),
@@ -62,6 +80,12 @@ const useStyles = makeStyles((theme) => ({
   },
   delete: {
     color: theme.palette.error.main,
+  },
+  block: {
+    color: theme.palette.error.main,
+  },
+  play: {
+    color: theme.palette.primary.main,
   },
   icon: {
     width: '25px',
@@ -78,6 +102,8 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: 'none',
   },
   actions: {
+    display: 'flex',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   root: ({ desktopPadding }) => ({
@@ -91,43 +117,36 @@ const useStyles = makeStyles((theme) => ({
     },
     [theme.breakpoints.down('md')]: {
       left: '50%',
-      bottom: `calc(${theme.spacing(3)} + ${theme.dimensions.bottomBarHeight}px)`,
+      bottom: `calc(${theme.spacing(3)} + ${
+        theme.dimensions.bottomBarHeight
+      }px)`,
     },
     transform: 'translateX(-50%)',
   }),
 }));
 
-const StatusRow = ({ name, content }) => {
-  const classes = useStyles();
-
-  return (
-    <TableRow>
-      <TableCell className={classes.cell}>
-        <Typography variant="body2">{name}</Typography>
-      </TableCell>
-      <TableCell className={classes.cell}>
-        <Typography variant="body2" color="textSecondary">{content}</Typography>
-      </TableCell>
-    </TableRow>
-  );
-};
-
-const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPadding = 0 }) => {
+const StatusCard = ({
+  deviceId,
+  position,
+  onClose,
+  disableActions,
+  desktopPadding = 0,
+}) => {
+  const admin = useAdministrator();
   const classes = useStyles({ desktopPadding });
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const t = useTranslation();
 
-  const deviceReadonly = useDeviceReadonly();
-
-  const shareDisabled = useSelector((state) => state.session.server.attributes.disableShare);
-  const user = useSelector((state) => state.session.user);
   const device = useSelector((state) => state.devices.items[deviceId]);
+  const user = useSelector((state) => state.session.user);
 
   const deviceImage = device?.attributes?.deviceImage;
 
-  const positionAttributes = usePositionAttributes(t);
-  const positionItems = useAttributePreference('positionItems', 'fixTime,address,speed,totalDistance');
+  const positionItems = useAttributePreference(
+    'positionItems',
+    'speed,totalDistance',
+  );
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -145,9 +164,26 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
     setRemoving(false);
   });
 
+  const formattedDate = position
+    ? dayjs(position.deviceTime).format('YYYY-MM-DD HH:mm')
+    : null;
+
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleShutdownClick = () => {
+    setOpenDialog(true);
+  };
+  const handleConfirmShutdown = ({ phoneNumber, deviceName, protocol }) => {
+    stopMotor({
+      phoneNumber,
+      deviceName,
+      protocol,
+    });
+    setOpenDialog(false);
+  };
   const handleGeofence = useCatchCallback(async () => {
     const newItem = {
-      name: t('sharedGeofence'),
+      name: '',
       area: `CIRCLE (${position.latitude} ${position.longitude}, 50)`,
     };
     const response = await fetch('/api/geofences', {
@@ -160,7 +196,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
       const permissionResponse = await fetch('/api/permissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId: position.deviceId, geofenceId: item.id }),
+        body: JSON.stringify({
+          deviceId: position.deviceId,
+          geofenceId: item.id,
+        }),
       });
       if (!permissionResponse.ok) {
         throw Error(await permissionResponse.text());
@@ -170,14 +209,12 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
       throw Error(await response.text());
     }
   }, [navigate, position]);
-
+  console.log(position);
   return (
     <>
       <div className={classes.root}>
         {device && (
-          <Draggable
-            handle={`.${classes.media}, .${classes.header}`}
-          >
+          <Draggable handle={`.${classes.media}, .${classes.header}`}>
             <Card elevation={3} className={classes.card}>
               {deviceImage ? (
                 <CardMedia
@@ -189,90 +226,281 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     onClick={onClose}
                     onTouchStart={onClose}
                   >
-                    <CloseIcon fontSize="small" className={classes.mediaButton} />
+                    <CloseIcon
+                      fontSize="small"
+                      className={classes.mediaButton}
+                    />
                   </IconButton>
                 </CardMedia>
               ) : (
-                <div className={classes.header}>
-                  <Typography variant="body2" color="textSecondary">
-                    {device.name}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={onClose}
-                    onTouchStart={onClose}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </div>
+                <>
+                  <div className={classes.header}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+
+                    >
+                      {device.name}
+                    </Typography>
+                    <div className={classes.header2}>
+                      {position?.attributes.hasOwnProperty('bleTemp1') && (
+                        <Typography variant="body2" color="textSecondary">
+                          <FaTemperatureFull
+                            fontSize="small"
+                            className={
+                              position?.attributes.bleTemp1 > 18
+                                ? classes.warning
+                                : classes.tooltipButton
+                            }
+                          />
+                          {Math.round(position.attributes.bleTemp1)}
+                          °/
+                          {Math.round(
+                            position.attributes.bleTemp1 * (9 / 5) + 32,
+                          )}
+                          °
+                        </Typography>
+                      )}
+                      <IconButton
+                        size="small"
+                        onClick={onClose}
+                        onTouchStart={onClose}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </div>
+                  </div>
+                  {!user.temporary && (
+                    <div className={classes.header}>
+                      {position
+                        && positionItems
+                          .split(',')
+                          .filter(
+                            (key) => position.hasOwnProperty(key)
+                              || position.attributes.hasOwnProperty(key),
+                          )
+                          .map((key) => (
+                            <Typography
+                              variant="body2"
+                              color="textSecondary"
+                              key={key}
+                            >
+                              <PositionValue
+                                position={position}
+                                property={
+                                  position.hasOwnProperty(key) ? key : null
+                                }
+                                attribute={
+                                  position.hasOwnProperty(key) ? null : key
+                                }
+                              />
+                            </Typography>
+                          ))}
+                      <Typography variant="body2" color="textSecondary">
+                        {/*
+                                        {position?.attributes.hasOwnProperty('bleTemp1') && (
+                                          `${Math.round(position.attributes.bleTemp1)}° / ${Math.round(position.attributes.bleTemp1 * (9 / 5) + 32)} °`
+                                        )} */}
+                      </Typography>
+                    </div>
+                  )}
+                </>
               )}
-              {position && (
-                <CardContent className={classes.content}>
-                  <Table size="small" classes={{ root: classes.table }}>
-                    <TableBody>
-                      {positionItems.split(',').filter((key) => position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key)).map((key) => (
+              {/* {position && (
+              <CardContent className={classes.content}>
+                <Table size="small" classes={{ root: classes.table }}>
+                  <TableBody>
+                    {positionItems
+                      .split(',')
+                      .filter(
+                        (key) => position.hasOwnProperty(key)
+                            || position.attributes.hasOwnProperty(key),
+                      )
+                      .map((key) => (
                         <StatusRow
                           key={key}
-                          name={positionAttributes[key]?.name || key}
+                          name={
+                              positionAttributes.hasOwnProperty(key)
+                                ? positionAttributes[key].name
+                                : key
+                            }
                           content={(
                             <PositionValue
                               position={position}
-                              property={position.hasOwnProperty(key) ? key : null}
-                              attribute={position.hasOwnProperty(key) ? null : key}
+                              property={
+                                  position.hasOwnProperty(key) ? key : null
+                                }
+                              attribute={
+                                  position.hasOwnProperty(key) ? null : key
+                                }
                             />
-                          )}
+                            )}
                         />
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
+                  </TableBody>
+                </Table>
+              </CardContent>
+              )} */}
+              {!user.temporary && (
+                <CardActions classes={{ root: classes.actions }} disableSpacing>
+                  {/* <IconButton
+                                color="secondary"
+                                onClick={(e) => setAnchorEl(e.currentTarget)}
+                                disabled={!position}
+                              >
+                                <PendingIcon />
+                              </IconButton> */}
+                  <IconButton
+                    onClick={() => navigate('/historial')}
+                    disabled={disableActions || !position}
+                  >
+                    <TbReportSearch />
+                  </IconButton>
+                  {position && (
+                    <>
+                      <IconButton
+                        href={`https://www.google.com.mx/maps/place/${position.latitude},${position.longitude}/`}
+                        target="_blank"
+                        className={classes.play}
+                      >
+                        <TbMapPinPin />
+                      </IconButton>
+                      <IconButton
+                        target="_blank"
+                        href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${position.latitude}%2C${position.longitude}&heading=${position.course}`}
+                        className={classes.play}
+                      >
+                        <LiaStreetViewSolid />
+                      </IconButton>
+                    </>
+                  )}
+                  {/* <IconButton
+                                onClick={() => navigate(`/settings/device/${deviceId}/command`)}
+                                disabled={disableActions}
+                              >
+                                <PublishIcon />
+                              </IconButton> */}
+                  <IconButton
+                    onClick={handleShutdownClick}
+                    className={classes.block}
+                  >
+                    <TbEngineOff />
+                  </IconButton>
+                  <Dialog
+                    open={openDialog}
+                    onClose={() => setOpenDialog(false)}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                  >
+                    <DialogTitle id="alert-dialog-title">
+                      ¿Estás seguro de que quieres apagar el motor?
+                    </DialogTitle>
+                    <DialogContent>
+                      <DialogContentText id="alert-dialog-description">
+                        Apagar el motor abruptamente, especialmente a altas
+                        velocidades, puede ocasionar pérdida de control y
+                        aumentar el riesgo de accidentes. En situaciones donde
+                        sea necesario apagar el motor mientras te desplazas, se
+                        recomienda hacerlo a baja velocidad para minimizar
+                        cualquier impacto en la conducción.
+                      </DialogContentText>
+                    </DialogContent>
+
+                    <DialogActions>
+                      <Button
+                        onClick={() => setOpenDialog(false)}
+                        color="primary"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        className={classes.block}
+                        onClick={() => handleConfirmShutdown({
+                          phoneNumber: device.phone,
+                          deviceName: device.name,
+                          protocol: position.protocol,
+                        })}
+                        autoFocus
+                      >
+                        Apagar
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+
+                  <IconButton
+                    onClick={() => runMotor({
+                      phoneNumber: device.phone,
+                      deviceName: device.name,
+                      protocol: position.protocol,
+                    })}
+                  >
+                    <TbEngine className={classes.play} />
+                  </IconButton>
+                  <IconButton>
+                    <TbMapPinShare
+                      className={classes.play}
+                      onClick={() => navigate(`/settings/device/${deviceId}/share`)}
+                    />
+                  </IconButton>
+                  {admin && !user.temporary && (
+                    <>
+                      <IconButton
+                        onClick={() => navigate(`/settings/device/${deviceId}`)}
+                      >
+                        <TbPencil />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => setRemoving(true)}
+                        className={classes.delete}
+                      >
+                        <TbTrashX />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => navigate(`/position/${position.id}`)}
+                      >
+                        <TbInfoCircle />
+                      </IconButton>
+                    </>
+                  )}
+                </CardActions>
               )}
-              <CardActions classes={{ root: classes.actions }} disableSpacing>
-                <IconButton
-                  color="secondary"
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  disabled={!position}
-                >
-                  <PendingIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => navigate('/replay')}
-                  disabled={disableActions || !position}
-                >
-                  <ReplayIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => navigate(`/settings/device/${deviceId}/command`)}
-                  disabled={disableActions}
-                >
-                  <PublishIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => navigate(`/settings/device/${deviceId}`)}
-                  disabled={disableActions || deviceReadonly}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => setRemoving(true)}
-                  disabled={disableActions || deviceReadonly}
-                  className={classes.delete}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </CardActions>
             </Card>
           </Draggable>
         )}
       </div>
       {position && (
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-          <MenuItem onClick={() => navigate(`/position/${position.id}`)}><Typography color="secondary">{t('sharedShowDetails')}</Typography></MenuItem>
-          <MenuItem onClick={handleGeofence}>{t('sharedCreateGeofence')}</MenuItem>
-          <MenuItem component="a" target="_blank" href={`https://www.google.com/maps/search/?api=1&query=${position.latitude}%2C${position.longitude}`}>{t('linkGoogleMaps')}</MenuItem>
-          <MenuItem component="a" target="_blank" href={`http://maps.apple.com/?ll=${position.latitude},${position.longitude}`}>{t('linkAppleMaps')}</MenuItem>
-          <MenuItem component="a" target="_blank" href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${position.latitude}%2C${position.longitude}&heading=${position.course}`}>{t('linkStreetView')}</MenuItem>
-          {!shareDisabled && !user.temporary && <MenuItem onClick={() => navigate(`/settings/device/${deviceId}/share`)}>{t('deviceShare')}</MenuItem>}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={() => navigate(`/position/${position.id}`)}>
+            <Typography color="secondary">{t('sharedShowDetails')}</Typography>
+          </MenuItem>
+          <MenuItem onClick={handleGeofence}>
+            {t('sharedCreateGeofence')}
+          </MenuItem>
+          <MenuItem
+            component="a"
+            target="_blank"
+            href={`https://www.google.com/maps/search/?api=1&query=${position.latitude}%2C${position.longitude}`}
+          >
+            {t('linkGoogleMaps')}
+          </MenuItem>
+          <MenuItem
+            component="a"
+            target="_blank"
+            href={`http://maps.apple.com/?ll=${position.latitude},${position.longitude}`}
+          >
+            {t('linkAppleMaps')}
+          </MenuItem>
+          <MenuItem
+            component="a"
+            target="_blank"
+            href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${position.latitude}%2C${position.longitude}&heading=${position.course}`}
+          >
+            {t('linkStreetView')}
+          </MenuItem>
         </Menu>
       )}
       <RemoveDialog
