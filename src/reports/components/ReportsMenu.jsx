@@ -70,7 +70,7 @@ const ReportsMenu = () => {
         />
         <MenuItem
           title={t('reportReplay')}
-          link="/replay"
+          link="/historial"
           icon={<RouteIcon />}
         />
       </List>

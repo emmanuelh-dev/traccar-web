@@ -2,39 +2,41 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import makeStyles from '@mui/styles/makeStyles';
 import {
-  IconButton, Tooltip, Avatar, ListItemAvatar, ListItemText, ListItemButton,
+  IconButton,
+  Tooltip,
+  ListItemAvatar,
+  ListItemText,
+  ListItemButton,
 } from '@mui/material';
-import BatteryFullIcon from '@mui/icons-material/BatteryFull';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import Battery60Icon from '@mui/icons-material/Battery60';
-import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
-import Battery20Icon from '@mui/icons-material/Battery20';
-import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
-import ErrorIcon from '@mui/icons-material/Error';
+
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { FaTemperatureFull } from 'react-icons/fa6';
+import { TbSettingsShare } from 'react-icons/tb';
 import { devicesActions } from '../store';
 import {
-  formatAlarm, formatBoolean, formatPercentage, formatStatus, getStatusColor,
+  formatAlarm,
+  formatBoolean,
+  formatPercentage,
+  formatStatus,
+  getStatusColor,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { mapIconKey, mapIcons } from '../map/core/preloadImages';
 import { useAdministrator } from '../common/util/permissions';
-import EngineIcon from '../resources/images/data/engine.svg?react';
 import { useAttributePreference } from '../common/util/preferences';
+import { PiEngineFill } from 'react-icons/pi';
+import { MdError } from 'react-icons/md';
+import {
+  Battery6Bar,
+  BatteryFull,
+  DeviceThermostat,
+} from '@mui/icons-material';
 
 dayjs.extend(relativeTime);
 
 const useStyles = makeStyles((theme) => ({
   icon: {
-    width: '25px',
-    height: '25px',
-    filter: 'brightness(0) invert(1)',
-  },
-  batteryText: {
-    fontSize: '0.75rem',
-    fontWeight: 'normal',
-    lineHeight: '0.875rem',
+    width: '40px',
   },
   success: {
     color: theme.palette.success.main,
@@ -47,6 +49,14 @@ const useStyles = makeStyles((theme) => ({
   },
   neutral: {
     color: theme.palette.neutral.main,
+  },
+  tooltipButton: {
+    color: theme.palette.primary.main,
+  },
+  iconText: {
+    fontSize: '0.9rem',
+    fontWeight: 'normal',
+    lineHeight: '0.875rem',
   },
 }));
 
@@ -65,19 +75,89 @@ const DeviceRow = ({ data, index, style }) => {
 
   const secondaryText = () => {
     let status;
+    const now = dayjs();
+    const lastUpdate = dayjs(item.lastUpdate);
+
+    const tenMinutesAgo = now.subtract(10, 'minute');
+    const hasTenMinutesPassed = lastUpdate.isBefore(tenMinutesAgo);
+
     if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
+      if (hasTenMinutesPassed) {
+        status = dayjs(item.lastUpdate).fromNow();
+      } else {
+        status = formatStatus(item.status, t);
+      }
     } else {
       status = dayjs(item.lastUpdate).fromNow();
     }
+    if (position?.attributes.hasOwnProperty('bleTemp1')) {
+      return <></>;
+    }
     return (
       <>
-        {deviceSecondary && item[deviceSecondary] && `${item[deviceSecondary]} • `}
-        <span className={classes[getStatusColor(item.status)]}>{status}</span>
+        {deviceSecondary &&
+          item[deviceSecondary] &&
+          `${item[deviceSecondary]} • `}
+        <span
+          className={
+            classes[
+              getStatusColor({
+                status: item.status,
+                speed: position?.speed,
+                termo: position?.attributes.hasOwnProperty('bleTemp1'),
+              })
+            ]
+          }
+        >
+          {status}
+        </span>
       </>
     );
   };
 
+  // const secondaryText = () => {
+  //   let status;
+  //   if (item.status === 'online' || !item.lastUpdate) {
+  //     status = formatStatus(item.status, t);
+  //   } else {
+  //     status = dayjs(item.lastUpdate).fromNow();
+  //   }
+  //   return (
+  //     <>
+  //       {deviceSecondary &&
+  //         item[deviceSecondary] &&
+  //         `${item[deviceSecondary]} • `}
+  //       <span
+  //         className={
+  //           classes[
+  //             getStatusColor({ status: item.status, speed: position?.speed })
+  //           ]
+  //         }
+  //       >
+  //         {status}
+  //       </span>
+  //     </>
+  //   );
+  // };
+
+  const toggleSendSms = () => {
+    dispatch(devicesActions.toggleSendSms());
+  };
+  const image = () => {
+    if (position?.attributes.hasOwnProperty('bleTemp1')) {
+      return item.status !== 'online'
+        ? '/2.png'
+        : (position?.speed ?? 0) >= 3
+        ? '/1.png'
+        : '/2.png';
+    } else {
+      return item.status !== 'online'
+        ? '/2.png'
+        : (position?.speed ?? 0) >= 3
+        ? '/1.png'
+        : '/3.png';
+    }
+  };
   return (
     <div style={style}>
       <ListItemButton
@@ -86,56 +166,133 @@ const DeviceRow = ({ data, index, style }) => {
         disabled={!admin && item.disabled}
       >
         <ListItemAvatar>
-          <Avatar>
-            <img className={classes.icon} src={mapIcons[mapIconKey(item.category)]} alt="" />
-          </Avatar>
+          <img className={classes.icon} src={image()} alt='' />
         </ListItemAvatar>
+
         <ListItemText
           primary={item[devicePrimary]}
           primaryTypographyProps={{ noWrap: true }}
           secondary={secondaryText()}
           secondaryTypographyProps={{ noWrap: true }}
         />
-        {position && (
+        {/* {position && (
           <>
             {position.attributes.hasOwnProperty('alarm') && (
-              <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
-                <IconButton size="small">
-                  <ErrorIcon fontSize="small" className={classes.error} />
+              <Tooltip
+                title={`${t('eventAlarm')}: ${formatAlarm(
+                  position.attributes.alarm,
+                  t
+                )}`}
+              >
+                <IconButton size='small'>
+                  <MdError fontSize='small' className={classes.error} />
                 </IconButton>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('ignition') && (
-              <Tooltip title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}>
-                <IconButton size="small">
+              <Tooltip
+                title={`${t('positionIgnition')}: ${formatBoolean(
+                  position.attributes.ignition,
+                  t
+                )}`}
+              >
+                <IconButton size='small'>
                   {position.attributes.ignition ? (
-                    <EngineIcon width={20} height={20} className={classes.success} />
+                    <PiEngineFill
+                      width={20}
+                      height={20}
+                      className={classes.success}
+                    />
                   ) : (
-                    <EngineIcon width={20} height={20} className={classes.neutral} />
+                    <PiEngineFill
+                      width={20}
+                      height={20}
+                      className={classes.neutral}
+                    />
                   )}
                 </IconButton>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('batteryLevel') && (
-              <Tooltip title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}>
-                <IconButton size="small">
-                  {(position.attributes.batteryLevel > 70 && (
-                    position.attributes.charge
-                      ? (<BatteryChargingFullIcon fontSize="small" className={classes.success} />)
-                      : (<BatteryFullIcon fontSize="small" className={classes.success} />)
-                  )) || (position.attributes.batteryLevel > 30 && (
-                    position.attributes.charge
-                      ? (<BatteryCharging60Icon fontSize="small" className={classes.warning} />)
-                      : (<Battery60Icon fontSize="small" className={classes.warning} />)
-                  )) || (
-                    position.attributes.charge
-                      ? (<BatteryCharging20Icon fontSize="small" className={classes.error} />)
-                      : (<Battery20Icon fontSize="small" className={classes.error} />)
+              <Tooltip
+                title={`${t('positionBatteryLevel')}: ${formatPercentage(
+                  position.attributes.batteryLevel
+                )}`}
+              >
+                <IconButton size='small'>
+                  {position.attributes.batteryLevel > 70 ? (
+                    position.attributes.charge ? (
+                      <BatteryChargingFullIcon
+                        fontSize='small'
+                        className={classes.success}
+                      />
+                    ) : (
+                      <BatteryFull
+                        fontSize='small'
+                        className={classes.success}
+                      />
+                    )
+                  ) : position.attributes.batteryLevel > 30 ? (
+                    position.attributes.charge ? (
+                      <BatteryCharging60Icon
+                        fontSize='small'
+                        className={classes.warning}
+                      />
+                    ) : (
+                      <Battery6Bar
+                        fontSize='small'
+                        className={classes.warning}
+                      />
+                    )
+                  ) : position.attributes.charge ? (
+                    <BatteryCharging20Icon
+                      fontSize='small'
+                      className={classes.error}
+                    />
+                  ) : (
+                    <Battery20Icon fontSize='small' className={classes.error} />
                   )}
                 </IconButton>
               </Tooltip>
             )}
           </>
+        )} */}
+        {/* {
+          deviceReadonly ? null : (
+            <Tooltip title="run" onClick={() => resumeDevice(item.phone)}>
+              <IconButton size="small">
+                <EngineIcon width={20} height={20} className={classes.tooltipButton} />
+              </IconButton>
+            </Tooltip>
+          )
+        } */}
+        {/* <PositionValue
+          position={item}
+          property="speed"
+          attribute={position?.speed}
+        /> */}
+        {position?.attributes.hasOwnProperty('bleTemp1') && (
+          <Tooltip title='Temperatura'>
+            <>
+              <DeviceThermostat
+                fontSize='small'
+                className={
+                  position.attributes.bleTemp1 > 18
+                    ? classes.warning
+                    : classes.tooltipButton
+                }
+              />
+              <span className={classes.iconText}>
+                {Math.round(position.attributes.bleTemp1)}° /{' '}
+                {Math.round((Math.round(position.attributes.bleTemp1) * (9 / 5)) + 32)}°
+              </span>
+            </>
+          </Tooltip>
+        )}
+        {admin && (
+          <IconButton size='small' onClick={toggleSendSms}>
+            <TbSettingsShare fontSize='medium' />
+          </IconButton>
         )}
       </ListItemButton>
     </div>

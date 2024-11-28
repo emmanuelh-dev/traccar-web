@@ -3,26 +3,78 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="${colorPrimary}" />
-    <meta name="description" content="${description}" />
+    <meta name="theme-color" content="#0694a2" />
     <link rel="icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" sizes="180x180" />
+    <link
+      rel="apple-touch-icon"
+      href="/apple-touch-icon-180x180.png"
+      sizes="180x180"
+    />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="stylesheet" href="/styles.css">
-    <title>${title}</title>
-    <style>
-      .loader {
-        position: fixed; top: calc(50% - 25px); left: calc(50% - 25px);
-        width: 50px; aspect-ratio: 1; box-sizing: content-box; animation: ll 1s infinite linear;
-        border-radius: 50%; border: 8px solid lightgray; border-right-color: black;
-      }
-      @keyframes ll {to{transform: rotate(1turn)}}
-    </style>
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Gonzher - Rastreo en Tiempo Real</title>
+    <meta
+      name="description"
+      content="Con el GPS de Gonzher Monitorea y administra fácilmente tu fuerza móvil de trabajadores. Ten una vista de 360º en casi tiempo real de las maniobras diarias de tu flota, para reducir costos, aumentar la productividad, estar al día con el mantenimiento del vehículo y sacar el máximo provecho a cada día de trabajo."
+    />
+
+    <link rel="canonical" href="https://api.gonzher.com/" />
+
+    <meta property="og:url" content="https://api.gonzher.com/" />
+    <meta property="og:title" content="GPS GONZHER" />
+    <meta
+      property="og:description"
+      content="Solución líder para la gestión de flotas y logística. Con rastreo en tiempo real, integración de sensores, desarrollo a medida, y facturación automatizada."
+    />
+    <meta property="og:image" content="https://gonzher.com/og-image.png" />
+    <meta property="og:image:width" content="800" />
+    <meta property="og:image:height" content="600" />
+
+    <meta name="twitter:title" content="Te han compartido un dispositivo" />
+    <meta
+      name="twitter:description"
+      content="Monitorea tus vehículos en tiempo real."
+    />
+    <meta name="twitter:image" content="https://gonzher.com/og-image.png" />
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="6e5e28d0-fe56-43b2-b2b1-43c10aff3c4f"
+    ></script>
   </head>
   <body>
-    <noscript>Enable JavaScript to use <a href="https://www.traccar.org/">Traccar GPS Tracking System</a>.</noscript>
+    <noscript>Enable JavaScript to use <a href="https://www.gonzher.com/">Gonzher GPS Tracking System</a>.</noscript>
     <div id="root" class="root"></div>
     <div class="loader"></div>
     <script type="module" src="/src/index.jsx" onerror="alert('Loading error.')"></script>
+        <!-- Google tag (gtag.js) -->
+        <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-8Q0SXFKWHP"
+      ></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+  
+        gtag("config", "G-8Q0SXFKWHP");
+      </script>
+      <!-- Google Analytics -->
+      <script
+        async
+        src="https://www.google-analytics.com/analytics.js?id=G-8Q0SXFKWHP"
+      ></script>
+      <script>
+        window.ga =
+          window.ga ||
+          function () {
+            (ga.q = ga.q || []).push(arguments);
+          };
+        ga.l = +new Date();
+        ga("create", "G-8Q0SXFKWHP", "auto");
+        ga("send", "pageview");
+      </script>
   </body>
 </html>

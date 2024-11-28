@@ -8,7 +8,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
 import DeviceList from './DeviceList';
 import BottomMenu from '../common/components/BottomMenu';
-import StatusCard from '../common/components/StatusCard';
+import StatusCard from '../common/components/StatusCard2';
 import { devicesActions } from '../store';
 import usePersistedState from '../common/util/usePersistedState';
 import EventsDrawer from './EventsDrawer';
