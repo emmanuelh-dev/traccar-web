@@ -15,6 +15,38 @@ import { useLocation } from 'react-router-dom';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAdministrator, useRestriction } from '../../common/util/permissions';
 import MenuItem from '../../common/components/MenuItem';
+import React from "react";
+import {
+  Divider,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import PauseCircleFilledIcon from "@mui/icons-material/PauseCircleFilled";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import RouteIcon from "@mui/icons-material/Route";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import ShareLocationIcon from '@mui/icons-material/ShareLocation';
+import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "../../common/components/LocalizationProvider";
+import {
+  useAdministrator,
+  useRestriction,
+} from "../../common/util/permissions";
+
+const MenuItem = ({ title, link, icon, selected }) => (
+  <ListItemButton key={link} component={Link} to={link} selected={selected}>
+    <ListItemIcon>{icon}</ListItemIcon>
+    <ListItemText primary={title} />
+  </ListItemButton>
+);
 
 const ReportsMenu = () => {
   const t = useTranslation();
@@ -57,7 +89,13 @@ const ReportsMenu = () => {
           selected={location.pathname === '/reports/stop'}
         />
         <MenuItem
-          title={t('reportSummary')}
+          title={t('sharedGeofence')}
+          link="/reports/geofence"
+          icon={<ShareLocationIcon />}
+          selected={location.pathname === '/reports/geofence'}
+        />
+        <MenuItem
+          title={t("reportSummary")}
           link="/reports/summary"
           icon={<FormatListBulletedIcon />}
           selected={location.pathname === '/reports/summary'}

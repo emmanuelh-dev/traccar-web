@@ -59,6 +59,7 @@ import AnnouncementPage from './settings/AnnouncementPage';
 import EmulatorPage from './other/EmulatorPage';
 import Loader from './common/components/Loader';
 import { generateLoginToken } from './common/components/NativeInterface';
+import GeofenceReportPage from './reports/GeofenceReportPage';
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -166,6 +167,7 @@ const Navigation = () => {
           <Route path="event" element={<EventReportPage />} />
           <Route path="route" element={<RouteReportPage />} />
           <Route path="stop" element={<StopReportPage />} />
+          <Route path="geofence" element={<GeofenceReportPage />} />
           <Route path="summary" element={<SummaryReportPage />} />
           <Route path="trip" element={<TripReportPage />} />
           <Route path="scheduled" element={<ScheduledPage />} />
