@@ -23,6 +23,7 @@ import {
 } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import MenuItem from '../../common/components/MenuItem';
+import { NotificationsActive } from '@mui/icons-material';
 
 const SettingsMenu = () => {
   const t = useTranslation();
@@ -53,6 +54,12 @@ const SettingsMenu = () => {
               icon={<NotificationsIcon />}
               selected={location.pathname.startsWith('/settings/notification')}
             />
+          <MenuItem
+            title={'Notifications History'}
+            link={"/alerts"}
+            icon={<NotificationsActive />}
+            selected={location.pathname === "/alerts"}
+          />
             <MenuItem
               title={t('settingsUser')}
               link={`/settings/user/${userId}`}

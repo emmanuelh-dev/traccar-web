@@ -60,6 +60,7 @@ import EmulatorPage from './other/EmulatorPage';
 import Loader from './common/components/Loader';
 import { generateLoginToken } from './common/components/NativeInterface';
 import GeofenceReportPage from './reports/GeofenceReportPage';
+import AlertsPage from './settings/AlertsPage';
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -118,6 +119,11 @@ const Navigation = () => {
         <Route path="replay" element={<ReplayPage />} />
         <Route path="geofences" element={<GeofencesPage />} />
         <Route path="emulator" element={<EmulatorPage />} />
+        {/* For backward compatabilty */}
+        <Route path="event/:id" element={<AlertsPage />} />
+        {/* For android and ios apps */}
+        <Route path="alert/:id" element={<EventPage />} />
+        <Route path="alerts" element={<AlertsPage />} />
 
         <Route path="settings">
           <Route path="accumulators/:deviceId" element={<AccumulatorsPage />} />
