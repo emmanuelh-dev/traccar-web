@@ -21,12 +21,10 @@ import useReportStyles from "./common/useReportStyles";
 import TableShimmerGeofenceReport from "../common/components/TableShimmerGeofenceReport";
 import scheduleReport from "./common/scheduleReport";
 import {
-  formatNumericHours,
   formatNumericSeconds,
   formatTime,
 } from "../common/util/formatter";
 import dayjs from "dayjs";
-import SettingsMenu from "../settings/components/SettingsMenu";
 
 const GeofenceReportPage = () => {
   const navigate = useNavigate();
@@ -133,7 +131,7 @@ const GeofenceReportPage = () => {
 
   return (
     <PageLayout
-      menu={<SettingsMenu />}
+      menu={<ReportsMenu />}
       breadcrumbs={["reportTitle", "sharedGeofence"]}
     >
       <div className={classes.container}>
