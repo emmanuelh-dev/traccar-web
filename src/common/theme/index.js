@@ -12,4 +12,7 @@ export default (server, darkMode, direction) => useMemo(() => createTheme({
   direction,
   dimensions,
   components,
+  shape: {
+    borderRadius: 0,
+  },
 }), [server, darkMode, direction]);
