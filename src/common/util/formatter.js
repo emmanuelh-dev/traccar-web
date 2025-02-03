@@ -85,6 +85,7 @@ export const formatNumericHours = (value, t) => {
   return `${hours} ${t('sharedHourAbbreviation')} ${minutes} ${t('sharedMinuteAbbreviation')}`;
 };
 
+
 export const formatNumericSeconds = (value, t) => {
   const hours = Math.floor(value / 3600);
   const minutes = Math.floor((value % 3600) / 60);
@@ -170,4 +171,39 @@ export const formatNotificationTitle = (t, notification, includeId) => {
     title += ` [${notification.id}]`;
   }
   return title;
+};
+
+export const formatAlertMessage = (alert, device) => {
+  const deviceName = device?.name || alert.deviceId;
+  const time = dayjs(alert.alertTime).format('DD/MM/YYYY HH:mm:ss');
+  
+  let geofenceName = '';
+  if (alert.attributes.body) {
+
+    const matches = alert.attributes.body.match(/geofence\s+(\w+)\s+at/);
+    if (matches && matches[1]) {
+      geofenceName = matches[1];
+    }
+  }
+
+  switch (alert.type) {
+    case 'geofenceEnter':
+      return `${deviceName} entró en la geozona "${geofenceName}"`;
+    case 'geofenceExit':
+      return `${deviceName} salió de la geozona "${geofenceName}"`;
+    case 'deviceOnline':
+      return `${deviceName} se ha conectado`;
+    case 'deviceOffline':
+      return `${deviceName} se ha desconectado`;
+    case 'deviceStopped':
+      return `${deviceName} se ha detenido`;
+    case 'deviceMoving':
+      return `${deviceName} está en movimiento`;
+    case 'deviceFuelDrop':
+      return `Caída de combustible detectada en ${deviceName}`;
+    case 'deviceOverspeed':
+      return `${deviceName} ha excedido el límite de velocidad`;
+    default:
+      return alert.attributes.body || `Alerta de ${deviceName}`;
+  }
 };
