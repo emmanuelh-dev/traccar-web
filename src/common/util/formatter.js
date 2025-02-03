@@ -85,6 +85,20 @@ export const formatNumericHours = (value, t) => {
   return `${hours} ${t('sharedHourAbbreviation')} ${minutes} ${t('sharedMinuteAbbreviation')}`;
 };
 
+export const formatNumericSeconds = (value, t) => {
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const seconds = value % 60;
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} ${t("sharedHourAbbreviation")}`);
+  if (minutes > 0) parts.push(`${minutes} ${t("sharedMinuteAbbreviation")}`);
+  if (seconds > 0 || parts.length === 0)
+    parts.push(`${seconds} ${t("sharedSecondAbbreviation")}`);
+
+  return parts.join(" ");
+};
+
 export const formatCoordinate = (key, value, unit) => {
   let hemisphere;
   let degrees;
