@@ -10,6 +10,9 @@ export default (server, darkMode) => ({
   primary: {
     main: validatedColor(server?.attributes?.colorPrimary) || (darkMode ? "#0F52BA" : "#0F52BA"),
   },
+  background: {
+    main: (darkMode ? "#e0e9f9" : "#e0e9f9"),
+  },
   secondary: {
     main: validatedColor(server?.attributes?.colorSecondary) || (darkMode ? "#0F52BA" : "#0F52BA"),
   },

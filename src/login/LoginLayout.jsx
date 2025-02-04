@@ -7,31 +7,35 @@ import LogoImage from './LogoImage';
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-    height: '100%',
+    height: '100vh',
   },
   sidebar: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    background: theme.palette.primary.main,
-    paddingBottom: theme.spacing(5),
-    width: theme.dimensions.sidebarWidth,
+    background: theme.palette.background.main,
+    width: '50%',
+    overflow: 'hidden', 
     [theme.breakpoints.down('lg')]: {
-      width: theme.dimensions.sidebarWidthTablet,
+      width: '50%',
     },
     [theme.breakpoints.down('sm')]: {
       width: '0px',
     },
   },
+  sidebarImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
   paper: {
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
-    boxShadow: '-2px 0px 16px rgba(0, 0, 0, 0.25)',
     [theme.breakpoints.up('lg')]: {
-      padding: theme.spacing(0, 25, 0, 0),
+      padding: theme.spacing(0, 0, 0, 0),
     },
   },
   form: {
@@ -44,11 +48,14 @@ const useStyles = makeStyles((theme) => ({
 const LoginLayout = ({ children }) => {
   const classes = useStyles();
   const theme = useTheme();
+  const isLgScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   return (
     <main className={classes.root}>
       <div className={classes.sidebar}>
-        {!useMediaQuery(theme.breakpoints.down('lg')) && <LogoImage color={theme.palette.secondary.contrastText} />}
+        {!isLgScreen && (
+          <img src="/main.png" alt="Sidebar Image" className={classes.sidebarImage} />
+        )}
       </div>
       <Paper className={classes.paper}>
         <form className={classes.form}>
