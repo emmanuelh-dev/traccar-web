@@ -78,8 +78,9 @@ export default async () => {
     const results = [];
     ['info', 'success', 'error', 'neutral'].forEach((color) => {
       results.push(loadImage(mapIcons[category]).then((icon) => {
-        mapImages[`${category}-${color}`] = prepareIcon(background, icon, mapPalette[color].main);
+        mapImages[`${category}-${color}`] = prepareIcon(icon, null, mapPalette[color].main);
       }));
+      
     });
     await Promise.all(results);
   }));
