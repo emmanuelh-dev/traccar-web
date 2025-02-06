@@ -590,6 +590,7 @@
     "categoryTruck": "Camión",
     "categoryVan": "Furgoneta",
     "categoryScooter": "Moto",
+    "categoryCaja": "Caja",
     "maintenanceStart": "Iniciar",
     "maintenancePeriod": "Período"
 }

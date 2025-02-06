@@ -591,6 +591,7 @@
     "categoryTruck": "Truck",
     "categoryVan": "Van",
     "categoryScooter": "Scooter",
+    "categoryCaja": "Caja",
     "maintenanceStart": "Start",
     "maintenancePeriod": "Period"
 }

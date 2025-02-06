@@ -1,5 +1,6 @@
 export default [
   'default',
+  'caja',
   'animal',
   'bicycle',
   'boat',
