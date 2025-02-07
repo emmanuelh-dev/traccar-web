@@ -25,6 +25,8 @@ const MapPositions = ({ positions, onClick, showStatus }) => {
       name: device.name,
       category: mapIconKey(device.category),
       color: showStatus ? position.attributes.color || getStatusColor(device.status) : 'neutral',
+      rotation: position.course || 0, // Ensure a default value (0) if course is missing
+      direction: showDirection,
     };
   };
 
@@ -93,13 +95,14 @@ const MapPositions = ({ positions, onClick, showStatus }) => {
         'text-halo-width': 1,
       },
     });
+
     map.addLayer({
       id: clusters,
       type: 'symbol',
       source: id,
       filter: ['has', 'point_count'],
       layout: {
-        'icon-image': 'background',
+        'icon-image': 'background', // Replace 'background' with your cluster icon
         'icon-size': iconScale,
         'text-field': '{point_count_abbreviated}',
         'text-font': findFonts(map),
