@@ -45,7 +45,7 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
       fixTime: formatTime(position.fixTime, 'seconds'),
       category: mapIconKey(device.category),
       color: showStatus ? position.attributes.color || getStatusColor(device.status) : 'neutral',
-      rotation: position.course,
+      rotation: position.course || 0, // Ensure a default value (0) if course is missing
       direction: showDirection,
     };
   };
@@ -53,9 +53,9 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
   const onMouseEnter = () => map.getCanvas().style.cursor = 'pointer';
   const onMouseLeave = () => map.getCanvas().style.cursor = '';
 
-  const onMapClickCallback = useCallback((event) => {
-    if (!event.defaultPrevented && onMapClick) {
-      onMapClick(event.lngLat.lat, event.lngLat.lng);
+  const onMapClick = useCallback((event) => {
+    if (!event.defaultPrevented && onClick) {
+      onClick(event.lngLat.lat, event.lngLat.lng);
     }
   }, [onMapClick]);
 
@@ -98,28 +98,36 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
         features: [],
       },
     });
+
     [id, selected].forEach((source) => {
+      const commonLayout = {
+        'icon-size': iconScale,
+        'icon-allow-overlap': true,
+        'text-field': `{${titleField || 'name'}}`,
+        'text-allow-overlap': true,
+        'text-anchor': 'bottom',
+        'text-offset': [0, -2 * iconScale],
+        'text-font': findFonts(map),
+        'text-size': 12,
+      };
+
       map.addLayer({
         id: source,
         type: 'symbol',
         source,
         filter: ['!has', 'point_count'],
         layout: {
+          ...commonLayout,
           'icon-image': '{category}-{color}',
-          'icon-size': iconScale,
-          'icon-allow-overlap': true,
-          'text-field': `{${titleField || 'name'}}`,
-          'text-allow-overlap': true,
-          'text-anchor': 'bottom',
-          'text-offset': [0, -2 * iconScale],
-          'text-font': findFonts(map),
-          'text-size': 12,
+          'icon-rotate': ['get', 'rotation'],
+          'icon-rotation-alignment': 'map',
         },
         paint: {
           'text-halo-color': 'white',
           'text-halo-width': 1,
         },
       });
+
       map.addLayer({
         id: `direction-${source}`,
         type: 'symbol',
@@ -130,9 +138,8 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
           ['==', 'direction', true],
         ],
         layout: {
+          ...commonLayout,  // Use common layout
           'icon-image': 'direction',
-          'icon-size': iconScale,
-          'icon-allow-overlap': true,
           'icon-rotate': ['get', 'rotation'],
           'icon-rotation-alignment': 'map',
         },
@@ -142,13 +149,14 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
       map.on('mouseleave', source, onMouseLeave);
       map.on('click', source, onMarkerClickCallback);
     });
+
     map.addLayer({
       id: clusters,
       type: 'symbol',
       source: id,
       filter: ['has', 'point_count'],
       layout: {
-        'icon-image': 'background',
+        'icon-image': 'background', // Replace 'background' with your cluster icon
         'icon-size': iconScale,
         'text-field': '{point_count_abbreviated}',
         'text-font': findFonts(map),
