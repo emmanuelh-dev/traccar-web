@@ -1,10 +1,14 @@
 export default [
   'default',
+  'car',
+  'truck',
+  'tracto',
+  'caja',
   'animal',
   'bicycle',
+  'retro',
   'boat',
   'bus',
-  'car',
   'camper',
   'crane',
   'helicopter',
@@ -18,7 +22,6 @@ export default [
   'train',
   'tram',
   'trolleybus',
-  'truck',
   'van',
   'scooter',
 ];
