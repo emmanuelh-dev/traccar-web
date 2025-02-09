@@ -6,50 +6,55 @@ import directionSvg from '../../resources/images/direction.svg';
 import backgroundSvg from '../../resources/images/background.svg';
 import animalSvg from '../../resources/images/icon/animal.svg';
 import bicycleSvg from '../../resources/images/icon/bicycle.svg';
-import boatSvg from '../../resources/images/icon/boat.svg';
-import busSvg from '../../resources/images/icon/bus.svg';
-import carSvg from '../../resources/images/icon/car.svg';
-import camperSvg from '../../resources/images/icon/camper.svg';
-import craneSvg from '../../resources/images/icon/crane.svg';
+import boatPNG from '../../resources/images/icon/boat.png';
+import busPNG from '../../resources/images/icon/bus.png';
+import carPNG from '../../resources/images/icon/car.png';
+import camperPNG from '../../resources/images/icon/van.png';
+import cranePNG from '../../resources/images/icon/crane.png';
 import defaultSvg from '../../resources/images/icon/default.svg';
-import startSvg from '../../resources/images/icon/start.svg';
-import finishSvg from '../../resources/images/icon/finish.svg';
-import helicopterSvg from '../../resources/images/icon/helicopter.svg';
-import motorcycleSvg from '../../resources/images/icon/motorcycle.svg';
+import helicopterPNG from '../../resources/images/icon/helicopter.png';
+import motorcyclePNG from '../../resources/images/icon/motorcycle.png';
+import trailer from '../../resources/images/icon/trailer.png';
 import personSvg from '../../resources/images/icon/person.svg';
+import pickupPNG from '../../resources/images/icon/pickup.png';
 import planeSvg from '../../resources/images/icon/plane.svg';
 import scooterSvg from '../../resources/images/icon/scooter.svg';
 import shipSvg from '../../resources/images/icon/ship.svg';
-import tractorSvg from '../../resources/images/icon/tractor.svg';
-import trailerSvg from '../../resources/images/icon/trailer.svg';
+import tractorPNG from '../../resources/images/icon/tractor.png';
 import trainSvg from '../../resources/images/icon/train.svg';
 import tramSvg from '../../resources/images/icon/tram.svg';
-import truckSvg from '../../resources/images/icon/truck.svg';
-import vanSvg from '../../resources/images/icon/van.svg';
+import trolleybusSvg from '../../resources/images/icon/trolleybus.svg';
+import truckPNG from '../../resources/images/icon/truck.png';
+import vanPNG from '../../resources/images/icon/van.png';
+import cajaPNG from '../../resources/images/icon/caja.png';
+import retroPNG from '../../resources/images/icon/retro.png';
 
 export const mapIcons = {
   animal: animalSvg,
   bicycle: bicycleSvg,
-  boat: boatSvg,
-  bus: busSvg,
-  car: carSvg,
-  camper: camperSvg,
-  crane: craneSvg,
+  boat: boatPNG,
+  bus: busPNG,
+  car: carPNG,
+  camper: camperPNG,
+  crane: cranePNG,
   default: defaultSvg,
-  finish: finishSvg,
-  helicopter: helicopterSvg,
-  motorcycle: motorcycleSvg,
+  helicopter: helicopterPNG,
+  motorcycle: motorcyclePNG,
+  offroad: trailer,
+  tracto: trailer,
   person: personSvg,
+  pickup: pickupPNG,
   plane: planeSvg,
   scooter: scooterSvg,
   ship: shipSvg,
-  start: startSvg,
-  tractor: tractorSvg,
-  trailer: trailerSvg,
+  tractor: tractorPNG,
   train: trainSvg,
   tram: tramSvg,
-  truck: truckSvg,
-  van: vanSvg,
+  trolleybus: trolleybusSvg,
+  truck: truckPNG,
+  van: vanPNG,
+  caja: cajaPNG,
+  retro: retroPNG,
 };
 
 export const mapIconKey = (category) => {
@@ -70,18 +75,57 @@ const mapPalette = createPalette({
   neutral: { main: grey[500] },
 });
 
+// Función para detectar si el archivo es PNG
+const isPng = (file) => file.endsWith('.png');
+
+const resizeImage = (image) => {
+  return new Promise((resolve) => {
+    const maxSize = 100;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = image.width;
+    let height = image.height;
+    if (width > maxSize || height > maxSize) {
+      const scale = Math.min(maxSize / width, maxSize / height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(image, 0, 0, width, height);
+    const resizedImage = new Image();
+    resizedImage.src = canvas.toDataURL();
+    resizedImage.onload = () => resolve(resizedImage);
+  });
+};
+
 export default async () => {
   const background = await loadImage(backgroundSvg);
   mapImages.background = await prepareIcon(background);
   mapImages.direction = await prepareIcon(await loadImage(directionSvg));
-  await Promise.all(Object.keys(mapIcons).map(async (category) => {
-    const results = [];
-    ['info', 'success', 'error', 'neutral'].forEach((color) => {
-      results.push(loadImage(mapIcons[category]).then((icon) => {
-        mapImages[`${category}-${color}`] = prepareIcon(icon, null, mapPalette[color].main);
-      }));
-      
-    });
-    await Promise.all(results);
-  }));
+  mapImages.arrow = await prepareIcon(await loadImage(arrowSvg));
+
+  await Promise.all(
+    Object.keys(mapIcons).map(async (category) => {
+      const iconPath = mapIcons[category];
+      const results = [];
+
+      ['info', 'success', 'error', 'neutral'].forEach((color) => {
+        results.push(
+          loadImage(iconPath).then(async (icon) => {
+            if (isPng(iconPath)) {
+              const resizedIcon = await resizeImage(icon);
+              mapImages[`${category}-${color}`] = resizedIcon;
+            } else {
+              mapImages[`${category}-${color}`] = prepareIcon(background, icon, mapPalette[color].main);
+            }
+          })
+        );
+      });
+
+      await Promise.all(results);
+    })
+  );
 };
