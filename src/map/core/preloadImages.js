@@ -2,6 +2,7 @@ import { grey } from '@mui/material/colors';
 import createPalette from '@mui/material/styles/createPalette';
 import { loadImage, prepareIcon } from './mapUtil';
 
+import arrowSvg from '../../resources/images/arrow.svg';
 import directionSvg from '../../resources/images/direction.svg';
 import backgroundSvg from '../../resources/images/background.svg';
 import animalSvg from '../../resources/images/icon/animal.svg';
@@ -28,7 +29,6 @@ import truckPNG from '../../resources/images/icon/truck.png';
 import vanPNG from '../../resources/images/icon/van.png';
 import cajaPNG from '../../resources/images/icon/caja.png';
 import retroPNG from '../../resources/images/icon/retro.png';
-
 export const mapIcons = {
   animal: animalSvg,
   bicycle: bicycleSvg,
@@ -41,13 +41,13 @@ export const mapIcons = {
   helicopter: helicopterPNG,
   motorcycle: motorcyclePNG,
   offroad: trailer,
-  tracto: trailer,
   person: personSvg,
   pickup: pickupPNG,
   plane: planeSvg,
   scooter: scooterSvg,
   ship: shipSvg,
   tractor: tractorPNG,
+  tracto: trailer,
   train: trainSvg,
   tram: tramSvg,
   trolleybus: trolleybusSvg,
@@ -57,17 +57,7 @@ export const mapIcons = {
   retro: retroPNG,
 };
 
-export const mapIconKey = (category) => {
-  switch (category) {
-    case 'offroad':
-    case 'pickup':
-      return 'car';
-    case 'trolleybus':
-      return 'bus';
-    default:
-      return mapIcons.hasOwnProperty(category) ? category : 'default';
-  }
-};
+export const mapIconKey = (category) => (mapIcons.hasOwnProperty(category) ? category : 'default');
 
 export const mapImages = {};
 
