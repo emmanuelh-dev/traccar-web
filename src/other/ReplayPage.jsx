@@ -52,7 +52,7 @@ import {
   usePreference,
 } from '../common/util/preferences';
 import PositionValue from '../common/components/PositionValue';
-import { Close } from '@mui/icons-material';
+import { Close, Tune } from '@mui/icons-material';
 import PDFDownloadButton from '../reports/PDFDownloadButton.jsx';
 
 const useStyles = makeStyles((theme) => ({
@@ -94,6 +94,7 @@ const useStyles = makeStyles((theme) => ({
   content: {
     display: 'flex',
     flexDirection: 'column',
+    padding: theme.spacing(2),
   },
   icon: {
     height: '20px',
@@ -139,7 +140,7 @@ const ReplayPage = () => {
   const [expanded, setExpanded] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [showTable, setShowTable] = useState(true);
+  const [showTable, setShowTable] = useState(desktop ? true : false);
   const distanceUnit = useAttributePreference('distanceUnit');
   const tableRef = useRef(null);
 
@@ -268,12 +269,12 @@ const ReplayPage = () => {
       </MapView>
       <MapCamera positions={positions} />
       <div className={classes.sidebar}>
-        <Paper elevation={3} square>
+        <Paper square>
           <Toolbar>
             <IconButton
               edge='start'
               sx={{ mr: 2 }}
-              onClick={() => setExpanded(true)}
+              onClick={() => navigate(-1)}
             >
               <ArrowBackIcon />
             </IconButton>
@@ -296,8 +297,8 @@ const ReplayPage = () => {
                 </IconButton> */}
               </>
             )}
-            <IconButton edge='end' onClick={() => navigate(-1)}>
-              <Close />
+            <IconButton edge='end' onClick={() => setExpanded(true)}>
+              <Tune />
             </IconButton>
           </Toolbar>
         </Paper>
@@ -315,7 +316,7 @@ const ReplayPage = () => {
                 value={index}
                 onChange={(_, index) => setIndex(index)}
               />
-              <Paper className={classes.controls}>
+              <Paper>
                 {`${index + 1}/${positions.length}`}
                 <IconButton
                   onClick={() => setIndex((index) => index - 1)}
