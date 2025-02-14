@@ -8,8 +8,8 @@ export default defineConfig(() => ({
   server: {
     port: 3000,
     proxy: {
-      '/api/socket': 'ws://https://gps.bysmax.com',
-      '/api': 'https://gps.bysmax.com',
+      '/api/socket': 'ws://https://tracker.geotracklat.com/',
+      '/api': 'https://tracker.geotracklat.com/',
     },
   },
   build: {
