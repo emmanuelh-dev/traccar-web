@@ -29,7 +29,7 @@ export default defineConfig(() => ({
       },
       manifest: {
         short_name: 'GPS BYSMAX',
-        name: 'Gestiona, administra y optimiza tu logística',
+        name: 'GPS BYSMAX',
         theme_color: '#0F52BA',
         icons: [
           {
