@@ -129,16 +129,20 @@ export const formatCoordinate = (key, value, unit) => {
   }
 };
 
-export const getStatusColor = (status) => {
-  switch (status) {
-    case 'online':
-      return 'success';
-    case 'offline':
-      return 'error';
-    case 'unknown':
-    default:
-      return 'neutral';
+export const getStatusColor = ({
+  status,
+  speed = 0,
+  termo = false,
+  ignition = false,
+}) => {
+  if (status === "online") {
+    if (speed > 0) {
+      return "success";
+    }
+
+    return "warning";
   }
+  return "error";
 };
 
 export const getBatteryStatus = (batteryLevel) => {

@@ -35,6 +35,7 @@ import usePositionAttributes from '../attributes/usePositionAttributes';
 import { devicesActions } from '../../store';
 import { useCatch, useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
+import { DeviceThermostat } from '@mui/icons-material';
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -183,6 +184,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
         {device && (
           <Draggable
             handle={`.${classes.media}, .${classes.header}`}
+            style={{
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}
           >
             <Card elevation={3} className={classes.card}>
               {deviceImage ? (
@@ -203,13 +208,40 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   <Typography variant="body2" color="textSecondary">
                     {device.name}
                   </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={onClose}
-                    onTouchStart={onClose}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: 0 }}>
+                    {position?.attributes.hasOwnProperty('bleTemp1') && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        marginRight: '8px'
+                      }}>
+                        <DeviceThermostat
+                          fontSize='small'
+                          style={{ marginRight: '2px' }}
+                        />
+                        <Typography
+                          variant='body2'
+                          color='textSecondary'
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          {Math.round(position.attributes.bleTemp1)}
+                          °/
+                          {Math.round((Math.round(position.attributes.bleTemp1) * (9 / 5)) + 32)}
+                          °
+                        </Typography>
+                      </div>
+                    )}
+                    <IconButton
+                      size='small'
+                      onClick={onClose}
+                      onTouchStart={onClose}
+                    >
+                      <CloseIcon fontSize='small' />
+                    </IconButton>
+                  </div>
                 </div>
               )}
               {position && (

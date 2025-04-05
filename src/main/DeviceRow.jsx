@@ -22,6 +22,7 @@ import { mapIconKey, mapIcons } from '../map/core/preloadImages';
 import { useAdministrator } from '../common/util/permissions';
 import EngineIcon from '../resources/images/data/engine.svg?react';
 import { useAttributePreference } from '../common/util/preferences';
+import { DeviceThermostat } from '@mui/icons-material';
 
 dayjs.extend(relativeTime);
 
@@ -65,15 +66,43 @@ const DeviceRow = ({ data, index, style }) => {
 
   const secondaryText = () => {
     let status;
-    if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
+    const now = dayjs();
+    const lastUpdate = dayjs(item.lastUpdate);
+
+    const tenMinutesAgo = now.subtract(10, "minute");
+    const hasTenMinutesPassed = lastUpdate.isBefore(tenMinutesAgo);
+
+    if (item.status === "online" || !item.lastUpdate) {
+      if (hasTenMinutesPassed) {
+        status = dayjs(item.lastUpdate).fromNow();
+      } else {
+        status = formatStatus(item.status, t);
+      }
     } else {
       status = dayjs(item.lastUpdate).fromNow();
     }
+    if (position?.attributes.hasOwnProperty("bleTemp1")) {
+      return <></>;
+    }
     return (
       <>
-        {deviceSecondary && item[deviceSecondary] && `${item[deviceSecondary]} • `}
-        <span className={classes[getStatusColor(item.status)]}>{status}</span>
+        {deviceSecondary &&
+          item[deviceSecondary] &&
+          `${item[deviceSecondary]} • `}
+        <span
+          className={
+            classes[
+            getStatusColor({
+              status: item.status,
+              speed: position?.speed,
+              termo: position?.attributes.hasOwnProperty("bleTemp1"),
+              ignition: position?.attributes?.ignition,
+            })
+            ]
+          }
+        >
+          {status}
+        </span>
       </>
     );
   };
@@ -128,14 +157,35 @@ const DeviceRow = ({ data, index, style }) => {
                       ? (<BatteryCharging60Icon fontSize="small" className={classes.warning} />)
                       : (<Battery60Icon fontSize="small" className={classes.warning} />)
                   )) || (
-                    position.attributes.charge
-                      ? (<BatteryCharging20Icon fontSize="small" className={classes.error} />)
-                      : (<Battery20Icon fontSize="small" className={classes.error} />)
-                  )}
+                      position.attributes.charge
+                        ? (<BatteryCharging20Icon fontSize="small" className={classes.error} />)
+                        : (<Battery20Icon fontSize="small" className={classes.error} />)
+                    )}
                 </IconButton>
               </Tooltip>
             )}
           </>
+        )}
+        {position?.attributes.hasOwnProperty("bleTemp1") && (
+          <Tooltip title="Temperatura">
+            <>
+              <DeviceThermostat
+                fontSize="small"
+                className={
+                  position.attributes.bleTemp1 > 18
+                    ? classes.warning
+                    : classes.tooltipButton
+                }
+              />
+              <span className={classes.iconText}>
+                {Math.round(position.attributes.bleTemp1)}° /{" "}
+                {Math.round(
+                  Math.round(position.attributes.bleTemp1) * (9 / 5) + 32
+                )}
+                °
+              </span>
+            </>
+          </Tooltip>
         )}
       </ListItemButton>
     </div>
