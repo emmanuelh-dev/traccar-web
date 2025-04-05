@@ -81,9 +81,6 @@ const DeviceRow = ({ data, index, style }) => {
     } else {
       status = dayjs(item.lastUpdate).fromNow();
     }
-    if (position?.attributes.hasOwnProperty("bleTemp1")) {
-      return <></>;
-    }
     return (
       <>
         {deviceSecondary &&
