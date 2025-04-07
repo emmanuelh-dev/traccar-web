@@ -70,17 +70,13 @@ const isPng = (file) => file.endsWith('.png');
 
 const resizeImage = (image) => {
   return new Promise((resolve) => {
-    const maxSize = 100;
+    const fixedWidth = 30;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    let width = image.width;
-    let height = image.height;
-    if (width > maxSize || height > maxSize) {
-      const scale = Math.min(maxSize / width, maxSize / height);
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
-    }
+    const aspectRatio = image.height / image.width;
+    const width = fixedWidth;
+    const height = Math.round(width * aspectRatio);
 
     canvas.width = width;
     canvas.height = height;
