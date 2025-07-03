@@ -9,7 +9,7 @@ import { useAttributePreference } from '../common/util/preferences';
 import { useCatchCallback } from '../reactHelper';
 import { findFonts } from './core/mapUtil';
 
-const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, selectedPosition, titleField }) => {
+const MapPositions = ({ positions, onClick, showStatus, selectedPosition, titleField }) => {
   const id = useId();
   const clusters = `${id}-clusters`;
   const selected = `${id}-selected`;
@@ -45,7 +45,7 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
       fixTime: formatTime(position.fixTime, 'seconds'),
       category: mapIconKey(device.category),
       color: showStatus ? position.attributes.color || getStatusColor(device.status) : 'neutral',
-      rotation: position.course,
+      rotation: position.course || 0,
       direction: showDirection,
     };
   };
@@ -53,19 +53,19 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
   const onMouseEnter = () => map.getCanvas().style.cursor = 'pointer';
   const onMouseLeave = () => map.getCanvas().style.cursor = '';
 
-  const onMapClickCallback = useCallback((event) => {
-    if (!event.defaultPrevented && onMapClick) {
-      onMapClick(event.lngLat.lat, event.lngLat.lng);
+  const onMapClick = useCallback((event) => {
+    if (!event.defaultPrevented && onClick) {
+      onClick(event.lngLat.lat, event.lngLat.lng);
     }
-  }, [onMapClick]);
+  }, [onClick]);
 
-  const onMarkerClickCallback = useCallback((event) => {
+  const onMarkerClick = useCallback((event) => {
     event.preventDefault();
     const feature = event.features[0];
-    if (onMarkerClick) {
-      onMarkerClick(feature.properties.id, feature.properties.deviceId);
+    if (onClick) {
+      onClick(feature.properties.id, feature.properties.deviceId);
     }
-  }, [onMarkerClick]);
+  }, [onClick]);
 
   const onClusterClick = useCatchCallback(async (event) => {
     event.preventDefault();
@@ -98,28 +98,36 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
         features: [],
       },
     });
+
     [id, selected].forEach((source) => {
+      const commonLayout = {
+        'icon-size': iconScale,
+        'icon-allow-overlap': true,
+        'text-field': `{${titleField || 'name'}}`,
+        'text-allow-overlap': true,
+        'text-anchor': 'bottom',
+        'text-offset': [0, -2 * iconScale],
+        'text-font': findFonts(map),
+        'text-size': 12,
+      };
+
       map.addLayer({
         id: source,
         type: 'symbol',
         source,
         filter: ['!has', 'point_count'],
         layout: {
+          ...commonLayout,
           'icon-image': '{category}-{color}',
-          'icon-size': iconScale,
-          'icon-allow-overlap': true,
-          'text-field': `{${titleField || 'name'}}`,
-          'text-allow-overlap': true,
-          'text-anchor': 'bottom',
-          'text-offset': [0, -2 * iconScale],
-          'text-font': findFonts(map),
-          'text-size': 12,
+          'icon-rotate': ['get', 'rotation'],
+          'icon-rotation-alignment': 'map',
         },
         paint: {
           'text-halo-color': 'white',
           'text-halo-width': 1,
         },
       });
+
       map.addLayer({
         id: `direction-${source}`,
         type: 'symbol',
@@ -130,9 +138,8 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
           ['==', 'direction', true],
         ],
         layout: {
+          ...commonLayout,  // Use common layout
           'icon-image': 'direction',
-          'icon-size': iconScale,
-          'icon-allow-overlap': true,
           'icon-rotate': ['get', 'rotation'],
           'icon-rotation-alignment': 'map',
         },
@@ -140,8 +147,9 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
 
       map.on('mouseenter', source, onMouseEnter);
       map.on('mouseleave', source, onMouseLeave);
-      map.on('click', source, onMarkerClickCallback);
+      map.on('click', source, onMarkerClick);
     });
+
     map.addLayer({
       id: clusters,
       type: 'symbol',
@@ -159,13 +167,13 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
     map.on('mouseenter', clusters, onMouseEnter);
     map.on('mouseleave', clusters, onMouseLeave);
     map.on('click', clusters, onClusterClick);
-    map.on('click', onMapClickCallback);
+    map.on('click', onMapClick);
 
     return () => {
       map.off('mouseenter', clusters, onMouseEnter);
       map.off('mouseleave', clusters, onMouseLeave);
       map.off('click', clusters, onClusterClick);
-      map.off('click', onMapClickCallback);
+      map.off('click', onMapClick);
 
       if (map.getLayer(clusters)) {
         map.removeLayer(clusters);
@@ -174,7 +182,7 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
       [id, selected].forEach((source) => {
         map.off('mouseenter', source, onMouseEnter);
         map.off('mouseleave', source, onMouseLeave);
-        map.off('click', source, onMarkerClickCallback);
+        map.off('click', source, onMarkerClick);
 
         if (map.getLayer(source)) {
           map.removeLayer(source);
@@ -187,7 +195,7 @@ const MapPositions = ({ positions, onMapClick, onMarkerClick, showStatus, select
         }
       });
     };
-  }, [mapCluster, clusters, onMarkerClickCallback, onClusterClick]);
+  }, [mapCluster, clusters, onMarkerClick, onClusterClick]);
 
   useEffect(() => {
     [id, selected].forEach((source) => {
