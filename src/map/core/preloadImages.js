@@ -15,7 +15,7 @@ import defaultSvg from '../../resources/images/icon/default.svg';
 import helicopterPNG from '../../resources/images/icon/helicopter.png';
 import motorcyclePNG from '../../resources/images/icon/motorcycle.png';
 import trailer from '../../resources/images/icon/trailer.png';
-import personSvg from '../../resources/images/icon/person.svg';
+import personPNG from '../../resources/images/icon/person.png';
 import pickupPNG from '../../resources/images/icon/pickup.png';
 import planeSvg from '../../resources/images/icon/plane.svg';
 import scooterSvg from '../../resources/images/icon/scooter.svg';
@@ -27,8 +27,9 @@ import truckPNG from '../../resources/images/icon/truck.png';
 import vanPNG from '../../resources/images/icon/van.png';
 import cajaPNG from '../../resources/images/icon/caja.png';
 import retroPNG from '../../resources/images/icon/retro.png';
-
+import taxiPNG from '../../resources/images/icon/taxi.png';
 export const mapIcons = {
+  taxi: taxiPNG,
   animal: animalSvg,
   bicycle: bicycleSvg,
   boat: boatPNG,
@@ -41,7 +42,7 @@ export const mapIcons = {
   motorcycle: motorcyclePNG,
   offroad: trailer,
   tracto: trailer,
-  person: personSvg,
+  person: personPNG,
   pickup: pickupPNG,
   plane: planeSvg,
   scooter: scooterSvg,

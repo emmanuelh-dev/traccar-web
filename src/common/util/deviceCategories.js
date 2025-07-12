@@ -13,6 +13,7 @@ export default [
   'crane',
   'helicopter',
   'motorcycle',
+  'taxi',
   'offroad',
   'person',
   'pickup',
