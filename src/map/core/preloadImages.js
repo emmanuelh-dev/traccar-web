@@ -87,7 +87,16 @@ const resizeImage = (image) => {
   });
 };
 
-export default async () => {
+// Paleta local para fallback de colores de íconos
+const mapPalette = {
+  info: { main: '#2196f3' },      // azul
+  success: { main: '#4caf50' },   // verde
+  error: { main: '#f44336' },     // rojo
+  neutral: { main: '#888' },      // gris
+};
+
+// Recibe palette como argumento
+export default async (palette = {}) => {
   const background = await loadImage(backgroundSvg);
   mapImages.background = await prepareIcon(background);
   mapImages.direction = await prepareIcon(await loadImage(directionSvg));
@@ -105,7 +114,9 @@ export default async () => {
               const resizedIcon = await resizeImage(icon);
               mapImages[`${category}-${color}`] = resizedIcon;
             } else {
-              mapImages[`${category}-${color}`] = prepareIcon(background, icon, mapPalette[color].main);
+              // Usa palette recibido como argumento, si no existe usa mapPalette local
+              const colorValue = palette[color]?.main || mapPalette[color]?.main || '#888';
+              mapImages[`${category}-${color}`] = await prepareIcon(background, icon, colorValue);
             }
           })
         );
