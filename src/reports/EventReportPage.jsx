@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FormControl, InputLabel, Select, MenuItem, Table, TableHead, TableRow, TableCell, TableBody, Link, IconButton,
 } from '@mui/material';
@@ -7,7 +7,7 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import { useSelector } from 'react-redux';
 import { formatSpeed, formatTime } from '../common/util/formatter';
-import ReportFilter from './components/ReportFilter';
+import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { prefixString, unprefixString } from '../common/util/stringUtils';
 import { useTranslation, useTranslationKeys } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -25,6 +25,7 @@ import MapCamera from '../map/MapCamera';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
 import SelectField from '../common/components/SelectField';
+import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const columnsArray = [
   ['eventTime', 'positionFixTime'],
@@ -40,6 +41,8 @@ const EventReportPage = () => {
   const { classes } = useReportStyles();
   const t = useTranslation();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const devices = useSelector((state) => state.devices.items);
   const geofences = useSelector((state) => state.geofences.items);
 
@@ -53,23 +56,25 @@ const EventReportPage = () => {
   }));
 
   const [columns, setColumns] = usePersistedState('eventColumns', ['eventTime', 'type', 'attributes']);
-  const [eventTypes, setEventTypes] = useState(['allEvents']);
-  const [alarmTypes, setAlarmTypes] = useState([]);
+  const eventTypes = useMemo(() => searchParams.getAll('eventType'), [searchParams]);
+  const alarmTypes = useMemo(() => searchParams.getAll('alarmType'), [searchParams]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [position, setPosition] = useState(null);
 
+  useEffect(() => {
+    if (!eventTypes.length) {
+      updateReportParams(searchParams, setSearchParams, 'eventType', ['allEvents']);
+    }
+  }, [searchParams, setSearchParams, eventTypes])
+
   useEffectAsync(async () => {
     if (selectedItem) {
-      const response = await fetch(`/api/positions?id=${selectedItem.positionId}`);
-      if (response.ok) {
-        const positions = await response.json();
-        if (positions.length > 0) {
-          setPosition(positions[0]);
-        }
-      } else {
-        throw Error(await response.text());
+      const response = await fetchOrThrow(`/api/positions?id=${selectedItem.positionId}`);
+      const positions = await response.json();
+      if (positions.length > 0) {
+        setPosition(positions[0]);
       }
     } else {
       setPosition(null);
@@ -77,61 +82,55 @@ const EventReportPage = () => {
   }, [selectedItem]);
 
   useEffectAsync(async () => {
-    const response = await fetch('/api/notifications/types');
-    if (response.ok) {
-      const types = await response.json();
-      setAllEventTypes([...allEventTypes, ...types.map((it) => [it.type, prefixString('event', it.type)])]);
-    } else {
-      throw Error(await response.text());
-    }
+    const response = await fetchOrThrow('/api/notifications/types');
+    const types = await response.json();
+    setAllEventTypes([...allEventTypes, ...types.map((it) => [it.type, prefixString('event', it.type)])]);
   }, []);
 
-  const handleSubmit = useCatch(async ({ deviceId, from, to, type }) => {
-    const query = new URLSearchParams({ deviceId, from, to });
+  const onShow = useCatch(async ({ deviceIds, groupIds, from, to }) => {
+    const query = new URLSearchParams({ from, to });
+    deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+    groupIds.forEach((groupId) => query.append('groupId', groupId));
     eventTypes.forEach((it) => query.append('type', it));
     if (eventTypes[0] !== 'allEvents' && eventTypes.includes('alarm')) {
       alarmTypes.forEach((it) => query.append('alarm', it));
     }
-    if (type === 'export') {
-      window.location.assign(`/api/reports/events/xlsx?${query.toString()}`);
-    } else if (type === 'mail') {
-      const response = await fetch(`/api/reports/events/mail?${query.toString()}`);
-      if (!response.ok) {
-        throw Error(await response.text());
-      }
-    } else {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/reports/events?${query.toString()}`, {
-          headers: { Accept: 'application/json' },
-        });
-        if (response.ok) {
-          setItems(await response.json());
-        } else {
-          throw Error(await response.text());
-        }
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    try {
+      const response = await fetchOrThrow(`/api/reports/events?${query.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      setItems(await response.json());
+    } finally {
+      setLoading(false);
     }
   });
 
-  const handleSchedule = useCatch(async (deviceIds, groupIds, report) => {
+  const onExport = useCatch(async ({ deviceIds, groupIds, from, to }) => {
+    const query = new URLSearchParams({ from, to });
+    deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+    groupIds.forEach((groupId) => query.append('groupId', groupId));
+    eventTypes.forEach((it) => query.append('type', it));
+    if (eventTypes[0] !== 'allEvents' && eventTypes.includes('alarm')) {
+      alarmTypes.forEach((it) => query.append('alarm', it));
+    }
+    window.location.assign(`/api/reports/events/xlsx?${query.toString()}`);
+  });
+
+  const onSchedule = useCatch(async (deviceIds, groupIds, report) => {
     report.type = 'events';
     if (eventTypes[0] !== 'allEvents') {
       report.attributes.types = eventTypes.join(',');
     }
-    const error = await scheduleReport(deviceIds, groupIds, report);
-    if (error) {
-      throw Error(error);
-    } else {
-      navigate('/reports/scheduled');
-    }
+    await scheduleReport(deviceIds, groupIds, report);
+    navigate('/reports/scheduled');
   });
 
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
+      case 'deviceId':
+        return devices[value].name;
       case 'eventTime':
         return formatTime(value, 'seconds');
       case 'type':
@@ -179,7 +178,7 @@ const EventReportPage = () => {
         )}
         <div className={classes.containerMain}>
           <div className={classes.header}>
-            <ReportFilter handleSubmit={handleSubmit} handleSchedule={handleSchedule} loading={loading}>
+            <ReportFilter onShow={onShow} onExport={onExport} onSchedule={onSchedule} deviceType="multiple" loading={loading}>
               <div className={classes.filterItem}>
                 <FormControl fullWidth>
                   <InputLabel>{t('reportEventTypes')}</InputLabel>
@@ -192,7 +191,7 @@ const EventReportPage = () => {
                       if (values.includes('allEvents') && values.length > 1) {
                         values = [clicked];
                       }
-                      setEventTypes(values);
+                      updateReportParams(searchParams, setSearchParams, 'eventType', values)
                     }}
                     multiple
                   >
@@ -207,7 +206,7 @@ const EventReportPage = () => {
                   <SelectField
                     multiple
                     value={alarmTypes}
-                    onChange={(e) => setAlarmTypes(e.target.value)}
+                    onChange={(e) => updateReportParams(searchParams, setSearchParams, 'alarmType', e.target.value)}
                     data={alarms}
                     keyGetter={(it) => it.key}
                     label={t('sharedAlarms')}
@@ -222,6 +221,7 @@ const EventReportPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
+                <TableCell>{t('sharedDevice')}</TableCell>
                 {columns.map((key) => (<TableCell key={key}>{t(columnsMap.get(key))}</TableCell>))}
               </TableRow>
             </TableHead>
@@ -239,13 +239,14 @@ const EventReportPage = () => {
                       </IconButton>
                     ))) || ''}
                   </TableCell>
+                  <TableCell>{devices[item.deviceId].name}</TableCell>
                   {columns.map((key) => (
                     <TableCell key={key}>
                       {formatValue(item, key)}
                     </TableCell>
                   ))}
                 </TableRow>
-              )) : (<TableShimmer columns={columns.length + 1} />)}
+              )) : (<TableShimmer columns={columns.length + 2} />)}
             </TableBody>
           </Table>
         </div>
