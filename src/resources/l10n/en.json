@@ -502,7 +502,6 @@
     "alarmLowPower": "Low Power",
     "alarmLowBattery": "Low Battery",
     "alarmFault": "Fault",
-    "alarmStorageFailure": "Camera Storage Failure",
     "alarmPowerOff": "Power Off",
     "alarmPowerOn": "Power On",
     "alarmDoor": "Door",
